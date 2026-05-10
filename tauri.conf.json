@@ -40,8 +40,8 @@
       "icons/icon.ico"
     ],
     "category": "Utility",
-    "shortDescription": "PCAP in, OT/ICS triage workbench out. No setup.",
-    "longDescription": "Drop GlassMarlin on a laptop, open a PCAP, and you have the full OT/ICS analyst workbench — topology with Purdue layering, risk findings, MITRE ATT&CK alignment, IOC threat hunting, per-asset baselines, time-window carve-out. Same workbench OT defenders use on the team server, running locally on the engagement host. Works offline, on planes, in SCIFs. Exports OCSF, STIX 2.1, Sigma, and ATT&CK Navigator alongside the human-readable view, so findings flow into your SIEM and your team server when you reconnect.",
+    "shortDescription": "GrassMarlin's successor. PCAP in, OT triage workbench out. No deps.",
+    "longDescription": "The successor to GrassMarlin. Drop GlassMarlin on a laptop, open a PCAP, and you have the full OT/ICS analyst workbench — topology with Purdue layering, risk findings, MITRE ATT&CK alignment, IOC threat hunting, per-asset baselines, time-window carve-out. Same workbench OT defenders use on the team server, running locally on the engagement host. Works offline. No Wireshark required. No Python install. No libpcap. No Npcap. No internet. Exports OCSF, STIX 2.1, Sigma, and ATT&CK Navigator alongside the human-readable view, so findings flow into your SIEM and your team server when you reconnect.",
     "publisher": "ERISFORGE Ltd.",
     "copyright": "Copyright © 2026 ERISFORGE Ltd. Licensed under AGPL-3.0-or-later.",
     "license": "AGPL-3.0-or-later",

@@ -2,7 +2,7 @@
 name = "glassmarlin"
 version = "0.1.0"
 edition = "2021"
-description = "PCAP in, OT/ICS triage workbench out. Drop one file on a laptop and triage captures offline — topology, findings, ATT&CK, IOCs, baselines."
+description = "The successor to GrassMarlin. Drop one file on a laptop, open a PCAP, get the full OT/ICS triage workbench offline. No Wireshark, no Python, no deps."
 authors = ["ERISFORGE Ltd. <erisforge@erisforge.com>"]
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/eris-ot/glassmarlin"
