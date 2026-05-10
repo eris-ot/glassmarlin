@@ -137,8 +137,6 @@ impl Drop for PythonRuntime {
 
 #[cfg(unix)]
 fn signal_term(child: &Child) -> std::io::Result<()> {
-    use std::os::unix::io::AsRawFd as _;
-    // Send SIGTERM to the child's PID.
     let pid = child.id() as i32;
     let rc = unsafe { libc::kill(pid, libc::SIGTERM) };
     if rc != 0 {

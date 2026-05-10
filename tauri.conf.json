@@ -6,7 +6,7 @@
   "build": {
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
-    "frontendDist": "../assets/splash"
+    "frontendDist": "./assets/splash"
   },
   "app": {
     "windows": [
@@ -22,7 +22,7 @@
         "transparent": false,
         "alwaysOnTop": false,
         "skipTaskbar": false,
-        "url": "splash.html"
+        "url": "index.html"
       }
     ],
     "security": {

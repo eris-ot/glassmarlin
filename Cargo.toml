@@ -20,8 +20,7 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
-tauri-plugin-log = "2"
+tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-process = "2"
 serde = { version = "1", features = ["derive"] }
@@ -38,6 +37,12 @@ portpicker = "0.1"
 dirs = "5"
 hex = "0.4"
 sha2 = "0.10"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+getrandom = "0.2"
 
 [features]
 # When `embed-bundle` is on, the build pulls the platform bundle from

@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use log::info;
+use tauri::Manager;
 
 pub use runtime::PythonRuntime;
 
@@ -29,9 +30,38 @@ pub fn run() -> Result<()> {
     let runtime = Arc::new(std::sync::Mutex::new(None::<PythonRuntime>));
     let runtime_setup = Arc::clone(&runtime);
     let runtime_teardown = Arc::clone(&runtime);
+    let runtime_signal = Arc::clone(&runtime);
+
+    // Forward SIGTERM/SIGINT to the bundled Python subprocess so it
+    // doesn't orphan when the parent is killed (deploy restart,
+    // `pkill glassmarlin`, container stop). The Tauri CloseRequested
+    // path handles normal user-driven close.
+    #[cfg(unix)]
+    std::thread::spawn(move || {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static FIRED: AtomicBool = AtomicBool::new(false);
+        unsafe extern "C" fn handler(_: libc::c_int) {
+            // Just flip the flag — actual cleanup must happen outside
+            // the signal handler (Rust async/Mutex aren't async-signal-safe).
+            FIRED.store(true, Ordering::SeqCst);
+        }
+        unsafe {
+            libc::signal(libc::SIGTERM, handler as libc::sighandler_t);
+            libc::signal(libc::SIGINT, handler as libc::sighandler_t);
+        }
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            if FIRED.load(Ordering::SeqCst) {
+                log::info!("signal received — shutting down MarlinSpike subprocess");
+                if let Some(rt) = runtime_signal.lock().unwrap().take() {
+                    rt.shutdown();
+                }
+                std::process::exit(0);
+            }
+        }
+    });
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .setup(move |app| {
@@ -75,7 +105,6 @@ pub fn run() -> Result<()> {
 }
 
 async fn boot(app: tauri::AppHandle) -> Result<PythonRuntime> {
-    use tauri::Manager;
     let data_dir = app
         .path()
         .app_data_dir()
