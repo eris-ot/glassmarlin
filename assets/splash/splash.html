@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GlassMarlin</title>
+<style>
+  :root {
+    --bg: #0d1720;
+    --bg-deep: #090e18;
+    --text: #cdd8e3;
+    --text-dim: #6e7f96;
+    --accent: #5b8af0;
+    --brand: #ef4444;
+    --font-ui: 'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    --font-mono: 'Fira Code','Cascadia Code','Consolas',monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(91,138,240,0.08) 0%, transparent 60%),
+      radial-gradient(circle at 70% 80%, rgba(239,68,68,0.06) 0%, transparent 60%),
+      var(--bg);
+  }
+  .splash {
+    text-align: center;
+    max-width: 480px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .brand-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--bg-deep);
+    border: 2px solid #ef444488;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--brand);
+    box-shadow: 0 0 16px rgba(239,68,68,0.25);
+    text-shadow: 0 0 8px rgba(239,68,68,0.55);
+  }
+  .brand-text {
+    font-size: 1.8em;
+    font-weight: 800;
+    color: var(--brand);
+    letter-spacing: -0.5px;
+  }
+  .tagline {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-bottom: 32px;
+    letter-spacing: 0.04em;
+  }
+  .status {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .progress {
+    width: 320px;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto;
+    position: relative;
+  }
+  .progress::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: sweep 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
+  }
+  @keyframes sweep {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(200%); }
+  }
+  .version {
+    margin-top: 36px;
+    font-family: var(--font-mono);
+    font-size: 0.7em;
+    color: #344056;
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+  <div class="splash">
+    <div class="brand">
+      <div class="brand-icon">GM</div>
+      <div class="brand-text">GlassMarlin</div>
+    </div>
+    <div class="tagline">passive OT topology mapping &middot; single binary</div>
+    <div class="status" id="status">Starting MarlinSpike runtime&hellip;</div>
+    <div class="progress" aria-label="loading"></div>
+    <div class="version">v0.1.0 &middot; ERISFORGE Ltd.</div>
+  </div>
+</body>
+</html>

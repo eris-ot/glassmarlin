@@ -1,0 +1,55 @@
+[package]
+name = "glassmarlin"
+version = "0.1.0"
+edition = "2021"
+description = "PCAP in, OT/ICS triage workbench out. Drop one file on a laptop and triage captures offline — topology, findings, ATT&CK, IOCs, baselines."
+authors = ["ERISFORGE Ltd. <erisforge@erisforge.com>"]
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/eris-ot/glassmarlin"
+default-run = "glassmarlin"
+
+[lib]
+name = "glassmarlin_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "glassmarlin"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-log = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+log = "0.4"
+env_logger = "0.11"
+zstd = "0.13"
+tar = "0.4"
+tokio = { version = "1", features = ["full"] }
+ureq = { version = "2", features = ["json"] }
+portpicker = "0.1"
+dirs = "5"
+hex = "0.4"
+sha2 = "0.10"
+
+[features]
+# When `embed-bundle` is on, the build pulls the platform bundle from
+# `bundle/<target_os>/` and embeds it via include_bytes!. When off, the
+# binary expects the bundle to be placed next to it at runtime (faster
+# iteration during dev — `cargo run` doesn't require a re-bake).
+default = ["embed-bundle"]
+embed-bundle = []
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,30 @@
+/target
+/bundle
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# Bundle artifacts — produced by scripts/build-bundle.sh, never committed
+/bundle/
+
+# Tauri build artifacts
+/src-tauri/target/
+/dist
+/release-artifacts
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Claude
+.claude/

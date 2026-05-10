@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GlassMarlin",
+  "version": "0.1.0",
+  "identifier": "com.erisforge.glassmarlin",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../assets/splash"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "GlassMarlin",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "url": "splash.html"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' http://127.0.0.1:* http://localhost:*; style-src 'self' 'unsafe-inline' http://127.0.0.1:* http://localhost:*; connect-src 'self' http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; img-src 'self' data: blob: http://127.0.0.1:* http://localhost:*; font-src 'self' data: http://127.0.0.1:* http://localhost:*"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app", "appimage", "deb", "msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Utility",
+    "shortDescription": "PCAP in, OT/ICS triage workbench out. No setup.",
+    "longDescription": "Drop GlassMarlin on a laptop, open a PCAP, and you have the full OT/ICS analyst workbench — topology with Purdue layering, risk findings, MITRE ATT&CK alignment, IOC threat hunting, per-asset baselines, time-window carve-out. Same workbench OT defenders use on the team server, running locally on the engagement host. Works offline, on planes, in SCIFs. Exports OCSF, STIX 2.1, Sigma, and ATT&CK Navigator alongside the human-readable view, so findings flow into your SIEM and your team server when you reconnect.",
+    "publisher": "ERISFORGE Ltd.",
+    "copyright": "Copyright © 2026 ERISFORGE Ltd. Licensed under AGPL-3.0-or-later.",
+    "license": "AGPL-3.0-or-later",
+    "homepage": "https://github.com/eris-ot/glassmarlin",
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "frameworks": []
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    },
+    "windows": {
+      "wix": {
+        "language": "en-US"
+      }
+    }
+  },
+  "plugins": {}
+}
