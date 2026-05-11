@@ -151,8 +151,15 @@ jobs:
 
       - name: GPG-sign SHA256SUMS
         working-directory: release
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          gpg --batch --yes \
+          # --pinentry-mode loopback + --passphrase-fd: bypass the agent and
+          # take the passphrase directly. The agent's pinentry isn't usable
+          # on headless CI runners ("Inappropriate ioctl for device").
+          printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes \
+              --pinentry-mode loopback \
+              --passphrase-fd 0 \
               --local-user 2CBC9B8E1FBAF06C \
               --armor --detach-sign \
               --output SHA256SUMS.asc \
