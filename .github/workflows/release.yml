@@ -20,11 +20,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: macos-14,     target_os: macos,   stamp: macos,   marlinspike_ref: main }
-          - { os: ubuntu-22.04, target_os: linux,   stamp: linux,   marlinspike_ref: main }
-          - { os: windows-2022, target_os: windows, stamp: windows, marlinspike_ref: main }
+          - { os: macos-14,         target_os: macos,   stamp: macos,   arch: aarch64, marlinspike_ref: main }
+          - { os: macos-13,         target_os: macos,   stamp: macos,   arch: x86_64,  marlinspike_ref: main }
+          - { os: ubuntu-22.04,     target_os: linux,   stamp: linux,   arch: amd64,   marlinspike_ref: main }
+          - { os: ubuntu-22.04-arm, target_os: linux,   stamp: linux,   arch: aarch64, marlinspike_ref: main }
+          - { os: windows-2022,     target_os: windows, stamp: windows, arch: x64,     marlinspike_ref: main }
     runs-on: ${{ matrix.os }}
-    name: build-${{ matrix.target_os }}
+    name: build-${{ matrix.target_os }}-${{ matrix.arch }}
     env:
       MARLINSPIKE_SRC: ${{ github.workspace }}/marlinspike
       MARLINSPIKE_DPI_SRC: ${{ github.workspace }}/marlinspike-dpi
@@ -109,7 +111,7 @@ jobs:
       - name: Upload platform artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: glassmarlin-${{ matrix.target_os }}-staging
+          name: glassmarlin-${{ matrix.target_os }}-${{ matrix.arch }}-staging
           path: staging/*
           if-no-files-found: error
 

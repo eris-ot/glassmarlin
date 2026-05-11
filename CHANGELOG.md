@@ -6,6 +6,24 @@ All notable changes to GlassMarlin are documented in this file. Format follows [
 
 Track work in flight against the [v0.2.0 milestone](https://github.com/eris-ot/glassmarlin/milestones).
 
+## [0.1.2] — 2026-05-11
+
+Platform-matrix expansion. Five binaries now ship per release instead of three.
+
+### Added
+
+- **macOS Intel (x86_64)** build — `GlassMarlin_0.1.2_x86_64.dmg`. Runs natively on Intel Macs without Rosetta. Built on the `macos-13` CI runner.
+- **Linux ARM64 (aarch64)** build — `GlassMarlin_0.1.2_aarch64.AppImage` and `_aarch64.deb`. For Raspberry Pi 4/5, Apple Silicon under Asahi/UTM, AWS Graviton, and other ARM servers. Built on the `ubuntu-22.04-arm` CI runner.
+
+### Changed
+
+- CI matrix is now 5 platforms (was 3). All five build in parallel and feed the same sign-and-release job.
+- Artifact names include explicit arch (`_x86_64`, `_aarch64`, `_amd64`, `_x64`) so cross-platform downloads can't pick the wrong file.
+
+### Bundled software
+
+Same as v0.1.1 — CPython 3.12.7, marlinspike 3.5.x, marlinspike-dpi (the Rust DPI engine), Flask, SQLAlchemy, Alembic. Each per-arch binary picks up the matching `python-build-standalone` interpreter at bundle time.
+
 ## [0.1.1] — 2026-05-11
 
 The "actually clean Windows binary" release. Closes the gap between what v0.1.0's release notes claimed ("no libpcap, no Npcap, no Wireshark install required") and what v0.1.0 actually delivered (silently degraded to empty reports when Wireshark wasn't installed).

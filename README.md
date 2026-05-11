@@ -61,7 +61,7 @@ Same workbench UX in both. Same report contract. Reports flow from GlassMarlin �
 
 ## Status
 
-**v0.1.1 — released.** macOS Apple Silicon + Linux (x86_64, AppImage + .deb) + Windows (x86_64, .msi + .exe), with the bundled Rust DPI engine inside the binary on all three platforms — the Windows binary is now actually clean (no libpcap, no Npcap, no Wireshark install required). macOS Intel in v0.1.2. Sigstore signing in v0.2.0. Auto-updater in v0.3.0. See [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap) below.
+**v0.1.2 — released.** Five binaries: macOS (Apple Silicon + Intel), Linux (x86_64 + ARM64, AppImage + .deb), Windows x86_64 (.msi + .exe). The bundled Rust DPI engine ships inside each binary — no libpcap, no Npcap, no Wireshark install required. Auto-updater lands in v0.3.0. See [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap) below.
 
 ## Installing
 
@@ -70,30 +70,30 @@ See [docs/install.md](docs/install.md) for the full per-platform recipe (includi
 ```sh
 # macOS — Apple Silicon. Drag to Applications, then first-launch:
 #   xattr -d com.apple.quarantine /Applications/GlassMarlin.app
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_aarch64.dmg -o GlassMarlin.dmg
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.2_aarch64.dmg -o GlassMarlin.dmg
 open GlassMarlin.dmg
 
 # Linux AppImage — chmod and run.
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_amd64.AppImage -o GlassMarlin.AppImage
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.2_amd64.AppImage -o GlassMarlin.AppImage
 chmod +x GlassMarlin.AppImage && ./GlassMarlin.AppImage
 
 # Linux .deb — apt install local file.
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_amd64.deb -o glassmarlin.deb
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.2_amd64.deb -o glassmarlin.deb
 sudo apt install ./glassmarlin.deb
 
 # Windows — .msi installer. SmartScreen → More info → Run anyway on first launch.
-# https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_x64_en-US.msi
+# https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.2_x64_en-US.msi
 ```
 
 All releases are GPG-signed by ERISFORGE Ltd. (`8C4879D492DE808D52D2C3F02CBC9B8E1FBAF06C`) and OpenTimestamped (Bitcoin-anchored). Full verification recipe in [docs/verifying-releases.md](docs/verifying-releases.md):
 
 ```sh
 gpg --recv-keys 2CBC9B8E1FBAF06C
-gh release download v0.1.1 --repo eris-ot/glassmarlin
+gh release download v0.1.2 --repo eris-ot/glassmarlin
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum -c SHA256SUMS
 ots verify SHA256SUMS.ots
-git tag -v v0.1.1   # also verifies the source release commit
+git tag -v v0.1.2   # also verifies the source release commit
 ```
 
 ## First run
@@ -146,8 +146,8 @@ The AGPL network-distribution clause means that if you serve GlassMarlin's web U
 ## Roadmap
 
 - **v0.1.0** — macOS Apple Silicon `.dmg`, Linux `.AppImage` + `.deb`, Windows `.msi` + `.exe`. Bundles CPython + the marlinspike codebase + every dep.
-- **v0.1.1** — *current.* Bundled Rust DPI engine ([`marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi)) inside the binary on all three platforms — the Windows binary is now actually clean (no libpcap, no Npcap, no Wireshark install). Pure-Python PCAP / PCAPNG validator drops the residual `capinfos` / `tshark` dependency for Stage 1 validation.
-- **v0.1.2** — macOS Intel build. Trivial CI matrix tweak.
+- **v0.1.1** — Bundled Rust DPI engine ([`marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi)) inside the binary on all three platforms — the Windows binary is now actually clean (no libpcap, no Npcap, no Wireshark install). Pure-Python PCAP / PCAPNG validator drops the residual `capinfos` / `tshark` dependency for Stage 1 validation.
+- **v0.1.2** — *current.* macOS Intel + Linux ARM64 builds added — five binaries per release.
 - **v0.2.0** — Sigstore + GitHub artifact attestations via the CI release workflow. Pure-Python replacement for the residual `tshark` + `editcap` shells in the time-window extract route.
 - **v0.3.0** — Tauri auto-updater (signed deltas).
 - **v0.5.0** — Native file associations: double-click a `.pcap` and the analyzer opens.
