@@ -61,33 +61,39 @@ Same workbench UX in both. Same report contract. Reports flow from GlassMarlin �
 
 ## Status
 
-**v0.1.0 — pre-release.** macOS (Apple Silicon + Intel) first. Windows + Linux in v0.2.0. Auto-updater in v0.3.0.
+**v0.1.0 — released.** macOS Apple Silicon + Linux (x86_64, AppImage + .deb) + Windows (x86_64, .msi + .exe). Intel macOS in v0.1.1. Bundled Rust DPI engine + Sigstore signing in v0.2.0. Auto-updater in v0.3.0. See [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap) below.
 
 ## Installing
 
-When v0.1.0 ships (target: end of week):
+See [docs/install.md](docs/install.md) for the full per-platform recipe (including the first-launch Gatekeeper/SmartScreen bypass).
 
 ```sh
-# macOS — download, open, drag to Applications.
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin.dmg -o GlassMarlin.dmg
+# macOS — Apple Silicon. Drag to Applications, then first-launch:
+#   xattr -d com.apple.quarantine /Applications/GlassMarlin.app
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_aarch64.dmg -o GlassMarlin.dmg
 open GlassMarlin.dmg
 
-# Linux (AppImage) — download, chmod +x, double-click.
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin.AppImage -o GlassMarlin.AppImage
+# Linux AppImage — chmod and run.
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_amd64.AppImage -o GlassMarlin.AppImage
 chmod +x GlassMarlin.AppImage && ./GlassMarlin.AppImage
 
-# Windows — download the .msi installer, double-click.
-# https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin.msi
+# Linux .deb — apt install local file.
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_amd64.deb -o glassmarlin.deb
+sudo apt install ./glassmarlin.deb
+
+# Windows — .msi installer. SmartScreen → More info → Run anyway on first launch.
+# https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_x64_en-US.msi
 ```
 
-All releases are signed by ERISFORGE Ltd. (`8C4879D492DE808D52D2C3F02CBC9B8E1FBAF06C`) and OpenTimestamped. Verifying:
+All releases are GPG-signed by ERISFORGE Ltd. (`8C4879D492DE808D52D2C3F02CBC9B8E1FBAF06C`) and OpenTimestamped (Bitcoin-anchored). Full verification recipe in [docs/verifying-releases.md](docs/verifying-releases.md):
 
 ```sh
 gpg --recv-keys 2CBC9B8E1FBAF06C
-gh release download v0.1.0
+gh release download v0.1.0 --repo eris-ot/glassmarlin
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum -c SHA256SUMS
 ots verify SHA256SUMS.ots
+git tag -v v0.1.0   # also verifies the source release commit
 ```
 
 ## First run
@@ -123,17 +129,30 @@ AGPL-3.0-or-later (matching MarlinSpike). Source at https://github.com/eris-ot/g
 
 The AGPL network-distribution clause means that if you serve GlassMarlin's web UI to remote users (you shouldn't — it binds to localhost by default), you're obligated to offer source. For the desktop use case the clause doesn't activate.
 
+## Documentation
+
+| If you want to… | Read |
+|---|---|
+| Install on macOS / Linux / Windows + bypass Gatekeeper / SmartScreen | [docs/install.md](docs/install.md) |
+| Verify a release signature (GPG, OpenTimestamps, future Sigstore) | [docs/verifying-releases.md](docs/verifying-releases.md) |
+| Debug a crash, port conflict, lost admin password, etc. | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Understand the Tauri + bundled-Python architecture (for contributors) | [docs/architecture.md](docs/architecture.md) |
+| Use the workbench itself — topology, findings, IOC hunting, baselines | [Workbench Guide](https://github.com/eris-ot/marlinspike/blob/main/docs/workbench-guide.md) |
+| Triage a capture from zero to report | [Triage Methodology](https://github.com/eris-ot/marlinspike/blob/main/docs/triage-methodology.md) |
+| Contribute code | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Report a security issue | [SECURITY.md](SECURITY.md) |
+| See what changed between releases | [CHANGELOG.md](CHANGELOG.md) |
+
 ## Roadmap
 
-- **v0.1.0** — macOS-only signed `.dmg`. Bundles the current MarlinSpike Python codebase + Rust DPI engine. No system deps.
-- **v0.2.0** — Windows `.msi` + Linux `.AppImage`. Pure-Rust replacement for the residual `tshark`/`editcap` shells so the Windows binary is clean (no libpcap, no Npcap, no Wireshark install).
+- **v0.1.0** — *current.* macOS Apple Silicon `.dmg`, Linux `.AppImage` + `.deb`, Windows `.msi` + `.exe`. Bundles CPython + the marlinspike codebase + every dep.
+- **v0.1.1** — macOS Intel build. Trivial CI matrix tweak.
+- **v0.2.0** — Sigstore + GitHub artifact attestations via the CI release workflow. Bundled Rust DPI engine ([`marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi)) — ~10–30× faster on large captures. Pure-Rust replacement for residual `tshark`/`editcap` shells so the Windows binary is clean (no libpcap, no Npcap, no Wireshark install).
 - **v0.3.0** — Tauri auto-updater (signed deltas).
 - **v0.5.0** — Native file associations: double-click a `.pcap` and the analyzer opens.
-- **v1.0.0** — Native Rust internals replace the bundled Python. Binary shrinks from ~120MB to ~15MB, cold start drops from ~3s to ~300ms. UX unchanged.
+- **v1.0.0** — Native Rust internals replace the bundled Python. Binary shrinks ~6×, cold start drops from ~3s to ~300ms. UX unchanged.
 
 ## See also
 
 - [`eris-ot/marlinspike`](https://github.com/eris-ot/marlinspike) — the team server (Python web app, multi-user, project workbench)
-- [`eris-ot/marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi) — the Rust DPI engine (bundled here)
-- [Workbench Guide](https://github.com/eris-ot/marlinspike/blob/main/docs/workbench-guide.md)
-- [Triage Methodology](https://github.com/eris-ot/marlinspike/blob/main/docs/triage-methodology.md)
+- [`eris-ot/marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi) — the Rust DPI engine
