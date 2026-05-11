@@ -16,14 +16,20 @@
 #   * tar with zstd support (or system zstd CLI)
 #
 # Env vars:
-#   MARLINSPIKE_SRC — path to a local checkout of eris-ot/marlinspike.
-#                     Defaults to ../marlinspike.
-#   PYTHON_VERSION  — defaults to 3.12.7.
+#   MARLINSPIKE_SRC      — path to a local checkout of eris-ot/marlinspike.
+#                          Defaults to ../marlinspike.
+#   MARLINSPIKE_DPI_SRC  — path to a local checkout of eris-ot/marlinspike-dpi.
+#                          Defaults to ../marlinspike-dpi.
+#                          Pass MARLINSPIKE_DPI_SRC=skip to omit the DPI engine
+#                          (the Python engine will fall back to its built-in
+#                          parser path — degraded but not broken).
+#   PYTHON_VERSION       — defaults to 3.12.7.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MARLINSPIKE_SRC="${MARLINSPIKE_SRC:-${ROOT}/../marlinspike}"
+MARLINSPIKE_DPI_SRC="${MARLINSPIKE_DPI_SRC:-${ROOT}/../marlinspike-dpi}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.12.7}"
 
 OS="$(uname -s)"
@@ -115,7 +121,33 @@ if [[ -f "${MARLINSPIKE_SRC}/data/oui.json" ]]; then
   cp "${MARLINSPIKE_SRC}/data/oui.json" "${DEST}/data/oui.json"
 fi
 
-echo "[5/5] Packing bundle.tar.zst"
+echo "[5/6] Building marlinspike-dpi (Rust DPI engine — drops the tshark/libpcap dependency)"
+if [[ "${MARLINSPIKE_DPI_SRC}" == "skip" ]]; then
+  echo "  Skipping per MARLINSPIKE_DPI_SRC=skip — engine will fall back to built-in parser"
+elif [[ ! -d "${MARLINSPIKE_DPI_SRC}" ]]; then
+  echo "  MARLINSPIKE_DPI_SRC=${MARLINSPIKE_DPI_SRC} not found" >&2
+  echo "  Set MARLINSPIKE_DPI_SRC to the path of your eris-ot/marlinspike-dpi checkout," >&2
+  echo "  or set MARLINSPIKE_DPI_SRC=skip to build without it (degraded engine path)." >&2
+  exit 1
+elif ! command -v cargo >/dev/null 2>&1; then
+  echo "  cargo not found — install Rust toolchain from https://rustup.rs/ first" >&2
+  exit 1
+else
+  case "${TARGET_OS}" in
+    windows) DPI_BIN_NAME="marlinspike-dpi.exe" ;;
+    *)       DPI_BIN_NAME="marlinspike-dpi" ;;
+  esac
+  (
+    cd "${MARLINSPIKE_DPI_SRC}"
+    cargo build --release --bin marlinspike-dpi
+  )
+  DPI_DEST="${DEST}/dpi"
+  mkdir -p "${DPI_DEST}"
+  cp "${MARLINSPIKE_DPI_SRC}/target/release/${DPI_BIN_NAME}" "${DPI_DEST}/${DPI_BIN_NAME}"
+  ls -lh "${DPI_DEST}/${DPI_BIN_NAME}"
+fi
+
+echo "[6/6] Packing bundle.tar.zst"
 cd "${BUNDLE_DIR}"
 rm -rf build
 tar --use-compress-program="zstd -19 --long=27 -T0" -cf bundle.tar.zst python marlinspike

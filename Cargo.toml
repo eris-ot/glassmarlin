@@ -1,6 +1,6 @@
 [package]
 name = "glassmarlin"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "The successor to GrassMarlin. Drop one file on a laptop, open a PCAP, get the full OT/ICS triage workbench offline. No Wireshark, no Python, no deps."
 authors = ["ERISFORGE Ltd. <erisforge@erisforge.com>"]

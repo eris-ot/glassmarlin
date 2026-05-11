@@ -27,6 +27,7 @@ jobs:
     name: build-${{ matrix.target_os }}
     env:
       MARLINSPIKE_SRC: ${{ github.workspace }}/marlinspike
+      MARLINSPIKE_DPI_SRC: ${{ github.workspace }}/marlinspike-dpi
       GLASSMARLIN_TARGET_OS_STAMP: ${{ matrix.stamp }}
     steps:
       - name: Checkout glassmarlin
@@ -38,6 +39,13 @@ jobs:
           repository: eris-ot/marlinspike
           ref: ${{ matrix.marlinspike_ref }}
           path: marlinspike
+
+      - name: Checkout marlinspike-dpi (bundled Rust DPI engine — drops Wireshark dep)
+        uses: actions/checkout@v4
+        with:
+          repository: eris-ot/marlinspike-dpi
+          ref: main
+          path: marlinspike-dpi
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable

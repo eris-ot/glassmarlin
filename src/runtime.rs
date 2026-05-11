@@ -26,9 +26,14 @@ impl PythonRuntime {
     pub fn spawn(cfg: SpawnConfig) -> Result<Self> {
         let python = python_executable(&cfg.runtime_root)?;
         let marlinspike_root = cfg.runtime_root.join("marlinspike");
+        let dpi_binary = bundled_dpi_binary(&cfg.runtime_root);
 
         debug!("python: {}", python.display());
         debug!("marlinspike root: {}", marlinspike_root.display());
+        match &dpi_binary {
+            Some(p) => debug!("marlinspike-dpi: {}", p.display()),
+            None => debug!("marlinspike-dpi: not bundled, engine will use built-in parser"),
+        }
 
         let mut cmd = Command::new(&python);
         cmd.current_dir(&marlinspike_root)
@@ -64,6 +69,14 @@ impl PythonRuntime {
             )
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+
+        // Point marlinspike at the bundled Rust DPI engine. With this set,
+        // engine.py's Stage 2 dispatches to marlinspike-dpi instead of
+        // shelling out to tshark — no Wireshark install required.
+        if let Some(dpi_path) = dpi_binary {
+            cmd.env("MARLINSPIKE_DPI_BIN", dpi_path);
+            cmd.env("MARLINSPIKE_DPI_ENGINE", "marlinspike-dpi");
+        }
 
         let child = cmd
             .spawn()
@@ -168,4 +181,21 @@ fn bundled_site_packages(runtime_root: &PathBuf) -> PathBuf {
         .join("lib")
         .join("python3.12")
         .join("site-packages");
+}
+
+/// Path to the bundled marlinspike-dpi binary, if one was packed into
+/// the runtime. Returns None if the bundle was built without the DPI
+/// engine (build-bundle.sh was called with MARLINSPIKE_DPI_SRC=skip,
+/// or this is an older runtime predating the DPI bundle).
+fn bundled_dpi_binary(runtime_root: &PathBuf) -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    let name = "marlinspike-dpi.exe";
+    #[cfg(not(target_os = "windows"))]
+    let name = "marlinspike-dpi";
+    let candidate = runtime_root.join("marlinspike").join("dpi").join(name);
+    if candidate.is_file() {
+        Some(candidate)
+    } else {
+        None
+    }
 }

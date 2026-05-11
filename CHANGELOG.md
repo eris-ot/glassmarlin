@@ -6,6 +6,25 @@ All notable changes to GlassMarlin are documented in this file. Format follows [
 
 Track work in flight against the [v0.2.0 milestone](https://github.com/eris-ot/glassmarlin/milestones).
 
+## [0.1.1] — 2026-05-11
+
+The "actually clean Windows binary" release. Closes the gap between what v0.1.0's release notes claimed ("no libpcap, no Npcap, no Wireshark install required") and what v0.1.0 actually delivered (silently degraded to empty reports when Wireshark wasn't installed).
+
+### Added
+
+- **Bundled `marlinspike-dpi`** — pure-Rust DPI engine ships inside the binary on all three platforms. 50+ OT/ICS + IT protocol dissectors, 21 anomaly signatures, no C dependencies. The runtime sets `MARLINSPIKE_DPI_BIN` automatically so `marlinspike`'s engine.py uses the Rust path instead of falling back to a missing `tshark`. ([`eris-ot/marlinspike-dpi`](https://github.com/eris-ot/marlinspike-dpi))
+- **Pure-Python PCAP / PCAPNG validator** in `marlinspike` (`marlinspike/_pcap_header.py`) — replaces the previous `capinfos` / `tshark` shell-out for Stage 1 validation. Stdlib only. Verified parity with `capinfos` on both classic PCAP and PCAPNG inputs.
+- `marlinspike-dpi` itself is now [dual-licensed](https://github.com/eris-ot/marlinspike-dpi/blob/main/LICENSE-COMMERCIAL.md): AGPL-3.0-or-later for OSS use, commercial licence available for proprietary embeds.
+
+### Changed
+
+- README and v0.1.0 release-notes claim "no libpcap, no Npcap, no Wireshark install required" is now actually true on the Windows binary. v0.1.0 was technically delivering a degraded path with empty reports on no-Wireshark hosts; this release fixes that.
+
+### Known limitations carried forward from v0.1.0
+
+- macOS Apple Silicon only. Intel build still pending.
+- Time-window extract (the "carve sub-PCAP" workbench feature) still shells to `tshark` + `editcap` on the back end. The workbench will surface a 500 error if Wireshark CLI tools aren't on `$PATH`. A pure-Python replacement lands in v0.2.0 alongside the Sigstore signing rollout.
+
 ## [0.1.0] — 2026-05-10
 
 First public release.

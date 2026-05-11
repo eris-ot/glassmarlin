@@ -7,7 +7,7 @@ Download from [the latest release](https://github.com/eris-ot/glassmarlin/releas
 **Apple Silicon (M-series).** Intel builds land in v0.1.1.
 
 ```sh
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_aarch64.dmg \
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_aarch64.dmg \
   -o GlassMarlin.dmg
 open GlassMarlin.dmg
 # In the Finder window: drag GlassMarlin.app to Applications.
@@ -30,7 +30,7 @@ Two artifacts. Choose by distro:
 ### AppImage (any glibc 2.28+ host)
 
 ```sh
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_amd64.AppImage \
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_amd64.AppImage \
   -o GlassMarlin.AppImage
 chmod +x GlassMarlin.AppImage
 ./GlassMarlin.AppImage
@@ -41,7 +41,7 @@ Self-contained — won't write outside `~/.local/share/com.erisforge.glassmarlin
 ### Debian / Ubuntu (.deb)
 
 ```sh
-curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_amd64.deb \
+curl -L https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_amd64.deb \
   -o glassmarlin.deb
 sudo apt install ./glassmarlin.deb
 glassmarlin   # or launch from the application menu
@@ -54,7 +54,7 @@ Two artifacts — `.msi` (recommended, installs to `Program Files`) or `.exe` (N
 ```powershell
 # PowerShell, run as admin
 Invoke-WebRequest `
-  -Uri "https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.0_x64_en-US.msi" `
+  -Uri "https://github.com/eris-ot/glassmarlin/releases/latest/download/GlassMarlin_0.1.1_x64_en-US.msi" `
   -OutFile "GlassMarlin.msi"
 Start-Process msiexec.exe -ArgumentList "/i GlassMarlin.msi" -Wait
 ```

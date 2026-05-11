@@ -81,8 +81,12 @@ marlinspike/              Marlinspike "data side" — what MARLINSPIKE_PROJECT_R
 ├── presets/              Asset/device taxonomy presets
 ├── plugins/              Python plugins (MITRE, APT, ARP)
 ├── migrations/           Alembic migration scripts
-└── data/oui.json         OUI vendor lookup database
+├── data/oui.json         OUI vendor lookup database
+└── dpi/
+    └── marlinspike-dpi   Compiled Rust DPI engine binary (since v0.1.1)
 ```
+
+The DPI engine is **the** reason the Windows binary doesn't need libpcap or Wireshark installed. The Rust shell sets `MARLINSPIKE_DPI_BIN` to point at this binary when spawning the Python subprocess, and `marlinspike`'s engine.py dispatches Stage 2 dissection to it. If the binary isn't present in the bundle (e.g., `build-bundle.sh` was called with `MARLINSPIKE_DPI_SRC=skip`), the runtime logs the absence and the engine falls back to its built-in parser path — degraded protocol coverage, not a crash.
 
 Compression: zstd level 19 with `--long=27`. Compresses ~120MB uncompressed to ~50MB (Linux), ~19MB (macOS, smaller because no glibc), ~30MB (Windows).
 
