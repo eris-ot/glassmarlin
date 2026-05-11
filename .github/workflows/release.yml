@@ -1,0 +1,264 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.1.0)'
+        required: true
+
+permissions:
+  contents: write       # create release, upload assets
+  id-token: write       # Sigstore keyless OIDC + GitHub attestations
+  attestations: write   # attest-build-provenance
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14,     target_os: macos,   stamp: macos,   marlinspike_ref: main }
+          - { os: ubuntu-22.04, target_os: linux,   stamp: linux,   marlinspike_ref: main }
+          - { os: windows-2022, target_os: windows, stamp: windows, marlinspike_ref: main }
+    runs-on: ${{ matrix.os }}
+    name: build-${{ matrix.target_os }}
+    env:
+      MARLINSPIKE_SRC: ${{ github.workspace }}/marlinspike
+      GLASSMARLIN_TARGET_OS_STAMP: ${{ matrix.stamp }}
+    steps:
+      - name: Checkout glassmarlin
+        uses: actions/checkout@v4
+
+      - name: Checkout marlinspike (bundled into the app)
+        uses: actions/checkout@v4
+        with:
+          repository: eris-ot/marlinspike
+          ref: ${{ matrix.marlinspike_ref }}
+          path: marlinspike
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Linux — Tauri / WebKit prerequisites
+        if: matrix.target_os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libayatana-appindicator3-dev \
+            patchelf \
+            zstd
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0" --locked
+
+      - name: Build runtime bundle
+        shell: bash
+        run: ./scripts/build-bundle.sh
+
+      - name: Tauri build (release)
+        run: cargo tauri build
+
+      # macOS: ad-hoc codesign the .app bundle BEFORE the .dmg is wrapped.
+      # We don't have an Apple Developer ID, but ad-hoc signing (`--sign -`)
+      # keeps the bundle internally consistent — Gatekeeper still requires
+      # `xattr -d com.apple.quarantine` on download, but the bundle itself
+      # is valid-signed (verifiable with `codesign --verify --deep`).
+      - name: macOS — ad-hoc codesign .app
+        if: matrix.target_os == 'macos'
+        run: |
+          APP=$(find target/release/bundle/macos -name "*.app" -type d | head -1)
+          if [ -n "$APP" ]; then
+            codesign --sign - --deep --force --options runtime "$APP"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+          fi
+
+      - name: Stage artifacts for release
+        shell: bash
+        run: |
+          mkdir -p staging
+          # Each platform contributes its native bundle(s).
+          find target/release/bundle \
+            \( -name "*.dmg" -o -name "*.msi" -o -name "*.exe" \
+               -o -name "*.AppImage" -o -name "*.deb" \) \
+            -exec cp -v {} staging/ \;
+          ls -la staging/
+
+      - name: Upload platform artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: glassmarlin-${{ matrix.target_os }}-staging
+          path: staging/*
+          if-no-files-found: error
+
+  sign-and-release:
+    needs: build
+    runs-on: ubuntu-22.04
+    name: sign + release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find downloaded -type f \
+            \( -name "*.dmg" -o -name "*.msi" -o -name "*.exe" \
+               -o -name "*.AppImage" -o -name "*.deb" \) \
+            -exec cp -v {} release/ \;
+          echo "--- release/ ---"
+          ls -la release/
+
+      - name: Generate SHA256SUMS
+        working-directory: release
+        run: |
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Import ERISFORGE GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          fingerprint: 8C4879D492DE808D52D2C3F02CBC9B8E1FBAF06C
+
+      - name: GPG-sign SHA256SUMS
+        working-directory: release
+        run: |
+          gpg --batch --yes \
+              --local-user 2CBC9B8E1FBAF06C \
+              --armor --detach-sign \
+              --output SHA256SUMS.asc \
+              SHA256SUMS
+          gpg --verify SHA256SUMS.asc SHA256SUMS
+
+      - name: Install OpenTimestamps client
+        run: pipx install opentimestamps-client
+
+      - name: OpenTimestamp SHA256SUMS
+        working-directory: release
+        run: |
+          ots stamp SHA256SUMS
+          ls -la SHA256SUMS.ots
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.1'
+
+      - name: Sigstore-sign each artifact (keyless OIDC)
+        working-directory: release
+        run: |
+          for f in *.dmg *.msi *.exe *.AppImage *.deb SHA256SUMS; do
+            [ -f "$f" ] || continue
+            echo "Signing $f"
+            COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes \
+              --output-signature "$f.sig" \
+              --output-certificate "$f.crt" \
+              "$f"
+          done
+          ls -la *.sig *.crt | head -40
+
+      - name: GitHub attest-build-provenance for each artifact
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            release/*.dmg
+            release/*.msi
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+
+      - name: Determine tag name
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          draft: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## GlassMarlin ${{ steps.tag.outputs.name }}
+
+            The successor to GrassMarlin. PCAP in, OT/ICS triage workbench out. No Wireshark required, no Python install, no internet, no deps.
+
+            ### Downloads
+
+            - **macOS (Apple Silicon)** — `GlassMarlin_*_aarch64.dmg`
+            - **Linux (x86_64)** — `GlassMarlin_*_amd64.AppImage` or `.deb`
+            - **Windows (x86_64)** — `GlassMarlin_*_x64-setup.exe` (NSIS) or `GlassMarlin_*_x64_en-US.msi`
+
+            ### Provenance & verification
+
+            Every artifact is signed three ways:
+
+            1. **GPG signature on `SHA256SUMS.asc`** — verifies the release came from ERISFORGE Ltd. (key fingerprint `8C4879D492DE808D52D2C3F02CBC9B8E1FBAF06C`).
+            2. **Sigstore keyless signature** (`<artifact>.sig` + `<artifact>.crt`) — cryptographic proof the artifact was built by this exact GitHub Actions workflow on this exact commit, verifiable via [`cosign`](https://github.com/sigstore/cosign).
+            3. **GitHub artifact attestation** — verifiable via `gh attestation verify <artifact> --repo eris-ot/glassmarlin`.
+
+            **`SHA256SUMS.ots`** is an [OpenTimestamps](https://opentimestamps.org) proof that the SHA256SUMS file existed at release time (anchored to the Bitcoin blockchain).
+
+            ```sh
+            # Verify GPG (most familiar)
+            gpg --recv-keys 2CBC9B8E1FBAF06C
+            gh release download ${{ steps.tag.outputs.name }} --repo eris-ot/glassmarlin
+            gpg --verify SHA256SUMS.asc SHA256SUMS
+            sha256sum -c SHA256SUMS
+
+            # Verify Sigstore (strongest — proves the build, not just the publisher)
+            cosign verify-blob \
+              --certificate GlassMarlin_${{ steps.tag.outputs.name }}_aarch64.dmg.crt \
+              --signature GlassMarlin_${{ steps.tag.outputs.name }}_aarch64.dmg.sig \
+              --certificate-identity-regexp 'https://github.com/eris-ot/glassmarlin/.*' \
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+              GlassMarlin_${{ steps.tag.outputs.name }}_aarch64.dmg
+
+            # Verify GitHub attestation
+            gh attestation verify GlassMarlin_${{ steps.tag.outputs.name }}_aarch64.dmg --repo eris-ot/glassmarlin
+
+            # Verify timestamp
+            ots verify SHA256SUMS.ots
+            ```
+
+            ### Notes on unsigned binaries
+
+            GlassMarlin is signed cryptographically (above) but **does not use paid OS-vendor code-signing certs**. This means:
+
+            - **macOS**: Gatekeeper will refuse the first launch with "Apple cannot verify". Right-click the `.app` → **Open**, or run `xattr -d com.apple.quarantine /Applications/GlassMarlin.app` once after install.
+            - **Windows**: SmartScreen will show "Windows protected your PC". Click **More info** → **Run anyway**.
+            - **Linux**: AppImage and `.deb` install cleanly without warnings.
+
+            This is a deliberate trade-off — we'd rather give you cryptographic build provenance via Sigstore (proves the *binary came from this commit on GitHub Actions*) than a CA-chain signature that only proves "someone paid for a cert".
+          files: |
+            release/*.dmg
+            release/*.msi
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/SHA256SUMS
+            release/SHA256SUMS.asc
+            release/SHA256SUMS.ots
+            release/*.sig
+            release/*.crt
